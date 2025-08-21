@@ -1,0 +1,41 @@
+# The following script is for Mikrotik RouterOS.
+# It automates the process of enabling and disabling YouTube Restricted Mode
+# by using DNS static entries.
+#Add a CNAME for the following hostnames:
+# www.youtube.com
+# m.youtube.com
+# youtubei.googleapis.com
+# youtube.googleapis.com
+# www.youtube-nocookie.com
+# To set strict restricted access, set the CNAME value to restrict.youtube.com.
+# To set moderate restricted access, set the CNAME value to restrictmoderate.youtube.com.
+
+# --- SCRIPT 1: ENABLE YOUTUBE RESTRICTED MODE ---
+
+# Find if a static DNS entry for YouTube already exists.
+# We are searching for an entry with the name 'www.youtube.com'.
+:local existingEntry [/ip dns static find name="www.youtube.com"]
+
+# Check if the entry was found. If it's empty, it means the rule does not exist yet.
+:if ([:len $existingEntry] > 0) do={
+    :put "YouTube Restricted Mode is already enabled. No changes made."
+} else={
+    # Add a new static DNS entry to redirect YouTube to the restricted mode server.
+    /ip dns static
+      add name="www.youtube.com" CNAME = " restrict.youtube.com" ttl="1d"
+    :put "YouTube Restricted Mode has been enabled successfully."
+}
+
+# --- SCRIPT 2: DISABLE YOUTUBE RESTRICTED MODE ---
+
+# Find the static DNS entry for YouTube Restricted Mode.
+:local restrictedEntry [/ip dns static find name="www.youtube.com"]
+
+# Check if the entry exists.
+:if ([:len $restrictedEntry] > 0) do={
+    # Remove the found entry.
+    /ip dns static remove $restrictedEntry
+    :put "YouTube Restricted Mode has been disabled successfully."
+} else={
+    :put "YouTube Restricted Mode is not currently enabled. No changes made."
+}
